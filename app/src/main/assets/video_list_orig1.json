@@ -1,0 +1,51 @@
+{
+  "status": "success",
+  "data": [
+    {
+      "id": "1",
+      "name": "Bugs Bunny",
+      "url": "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4"
+    },
+    {
+      "id": "2",
+      "name": "Tom & Jerry",
+      "url": "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4"
+    },
+    {
+      "id": "3",
+      "name": "Swat Cats",
+      "url": "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4"
+    },
+    {
+      "id": "4",
+      "name": "Doraemon",
+      "url": "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4"
+    },
+    {
+      "id": "6",
+      "name": "Shinchan",
+      "url": "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4"
+    },
+    {
+      "id": "7",
+      "name": "Chota Bheem",
+      "url": "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4"
+    },
+    {
+      "id": "8",
+      "name": "Little Singham",
+      "url": "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4"
+    },
+    {
+      "id": "9",
+      "name": "Ninja Hathaudi",
+      "url": "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4"
+    },
+    {
+      "id": "10",
+      "name": "Arabian Nights",
+      "url": "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4"
+    }
+  ],
+  "message": "Video List"
+}
