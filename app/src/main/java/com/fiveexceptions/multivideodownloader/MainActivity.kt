@@ -10,12 +10,13 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -48,7 +49,8 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
         Log.e("VideoList",str+"__")
         val list = parseJsonToModel(str)
         Log.e("ListSize","${list.size}")*/
-        //setSupportActionBar(binding.toolbar)
+        //setSupportActionBar(binding.toolbar.toolbar)
+
         val adapter = VideoAdapter()
         val layoutManager = LinearLayoutManager(this) // 'this' refers to the Context (e.g., your Activity)
         binding.rvVideos.setLayoutManager(layoutManager)
@@ -63,6 +65,7 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
         adapter.setOnItemClickListener(this)
         viewModel.prepare(this)
 
+        preparePlaylist()
 
         lifecycleScope.launch {
             viewModel.items.collect { list ->
@@ -84,20 +87,38 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
 
         //initPlayer()
 
-        viewModel.startDownloading()
+        viewModel.startDownloadingOrPlaying()
 
 
         /*val navController = findNavController(R.id.nav_host_fragment_content_main)
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)*/
 
-        /*binding.fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null)
-                .setAnchorView(R.id.fab).show()
-        }*/
+        binding.fab.setOnClickListener { view ->
+            preparePlaylist()
+            binding.fab.visibility = View.GONE
+            Toast.makeText(this,"Autoplay enabled",Toast.LENGTH_SHORT).show()
+        }
     }
 
+    fun preparePlaylist(){
+
+        played.clear()
+        lifecycleScope.launch {
+            viewModel.items.collect { list ->
+                val completed = list.firstOrNull { it.status == Constants.STATUS_DOWNLOADED && it.file != null && !played.contains(it.id) }
+                Log.e("Completed Id","${completed?.id}")
+                completed?.let { item ->
+
+                    playFile(item)
+                    /*if (exoPlayer == null || exoPlayer?.currentMediaItem == null ||
+                        exoPlayer?.currentMediaItem?.localConfiguration?.uri != uri) {
+                        playFile(uri)
+                    }*/
+                }
+            }
+        }
+    }
     fun downloadThumbnail(list:List<VideoItem>,adapter:VideoAdapter){
         lifecycleScope.launch(Dispatchers.IO) {
 
@@ -171,16 +192,27 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
                     }
                 }
             )*/
-            player.addMediaItem(mediaItem)
+
 //            player.remo
             if(!player.isPlaying){
                 player.prepare()
                 player.playWhenReady = true
+                //player.addMediaItem(mediaItem)
             }
-            else if(forcePlay){
-                player.stop()
+            if(forcePlay){
+                /*player.stop()
                 player.prepare()
-                player.seekToNextMediaItem()
+                player.seekToNextMediaItem()*/
+
+                //player.getMed
+                //player.addMediaItem(mediaItem)
+                player.setMediaItem(mediaItem)
+                player.prepare()
+                player.play()
+                binding.fab.visibility = View.VISIBLE
+            }
+            else{
+                player.addMediaItem(mediaItem)
             }
             played.add(item.id)
             //viewModel.updateItemStatus(item.id) { it.copy(status = Constants.STATUS_FAILED) }
@@ -219,6 +251,10 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
         item.status?.let{
             if(it==Constants.STATUS_DOWNLOADED){
                 playFile(item, forcePlay = true)
+                Toast.makeText(this,"Autoplay disabled",Toast.LENGTH_SHORT).show()
+            }
+            else if(it==Constants.STATUS_FAILED){
+                viewModel.startDownloadingOrPlaying()
             }
         }
 

@@ -47,7 +47,7 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
         _items.value = list
     }
 
-    fun startDownloading() {
+    fun startDownloadingOrPlaying() {
         val current = _items.value
         current.forEach { item ->
             viewModelScope.launch(Dispatchers.IO) {
@@ -60,6 +60,10 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
 
             }
         }
+    }
+
+    fun updateFailedStatuses(){
+
     }
 
     fun checkFileExists(id:Int): Boolean{
@@ -116,6 +120,7 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
                 updateItemStatus(item.id) { it.copy(progress = 100, status = Constants.STATUS_DOWNLOADED,
                     file = targetFile) }
             } catch (e: Exception) {
+                Log.e("DownloadException ${item.id} - ${item.name}","${e.printStackTrace()}")
                 response.close()
                 targetFile.delete()
                 updateItemStatus(item.id) { it.copy(status = Constants.STATUS_FAILED) }
@@ -126,6 +131,7 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
                 try { output.close() } catch (e: Exception) {
                     Log.e("DownloadException","${e.printStackTrace()}")
                 }
+
             }
         } finally {
             semaphore.release()

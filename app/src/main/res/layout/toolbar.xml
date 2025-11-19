@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/toolbar"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:background="@color/white"
+    android:elevation="5dp">
+    <!--app:navigationIcon="@drawable/back_svgrepo"-->
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Parallel Video Downloader">
+
+    </androidx.appcompat.widget.AppCompatTextView>
+    <ImageView
+        android:id="@+id/ivAutoPlay"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="right"
+        android:layout_marginRight="12dp"
+        android:layout_toRightOf="@+id/text"
+        android:src="@drawable/playlist_svgrepo"
+        android:visibility="visible" />
+
+</androidx.appcompat.widget.Toolbar>
