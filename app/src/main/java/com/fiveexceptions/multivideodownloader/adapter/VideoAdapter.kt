@@ -116,11 +116,17 @@ class VideoAdapter(/*private val dataSet: List<VideoItem>*/) :
                 }
             }
 
-            Glide.with(binding.root.context)
+            item.thumbFile?.let {
+                Glide.with(binding.root.context)
+                    .load(it)        // video URL
+                    //.frame(1_000_000)      // capture frame at 1 second
+                    .into(videoView)
+            }
+            /*Glide.with(binding.root.context)
                 .asBitmap()
                 .load(item.url)        // video URL
                 .frame(1_000_000)      // capture frame at 1 second
-                .into(videoView)
+                .into(videoView)*/
 
             /*item.thumbNail?.let {
                 videoView.setImageBitmap(it)

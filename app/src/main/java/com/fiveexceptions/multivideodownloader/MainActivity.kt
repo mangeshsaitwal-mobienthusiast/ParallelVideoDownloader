@@ -4,6 +4,7 @@ package com.fiveexceptions.multivideodownloader
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController*/
+import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
@@ -17,6 +18,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -31,6 +33,7 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 
 class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
@@ -64,7 +67,7 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
         binding.rvVideos.adapter = adapter
         adapter.setOnItemClickListener(this)
         viewModel.prepare(this)
-        
+
         lifecycleScope.launch {
             viewModel.items.collect { list ->
                 adapter.submitList(list)
@@ -103,17 +106,21 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
 
         played.clear()
         lifecycleScope.launch {
+
+
             viewModel.items.collect { list ->
-                val completed = list.firstOrNull { it.status == Constants.STATUS_DOWNLOADED && it.file != null && !played.contains(it.id) }
+
+                list.forEach {
+                    if(it.status == Constants.STATUS_DOWNLOADED && it.file != null && !played.contains(it.id)){
+                        playFile(it)
+                    }
+                }
+                /*val completed = list.firstOrNull { it.status == Constants.STATUS_DOWNLOADED && it.file != null && !played.contains(it.id) }
                 Log.e("Completed Id","${completed?.id}")
                 completed?.let { item ->
 
                     playFile(item)
-                    /*if (exoPlayer == null || exoPlayer?.currentMediaItem == null ||
-                        exoPlayer?.currentMediaItem?.localConfiguration?.uri != uri) {
-                        playFile(uri)
-                    }*/
-                }
+                }*/
             }
         }
     }
@@ -158,8 +165,16 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
         binding.container.addView(playerView, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT
         ))
+        binding.container.visibility = View.VISIBLE
     }
 
+    fun checkFileExists(id:Int): Boolean{
+        val targetFile = File(this.filesDir, "video_${id}.mp4")
+        if(targetFile.exists()){
+            return true
+        }
+        return false
+    }
     private fun playFile(item: VideoItem,forcePlay:Boolean =  false) {
 
         if(item.file==null){
@@ -175,12 +190,17 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
                 player.prepare()
             }*/
             val mediaItem = MediaItem.fromUri(uri)
+
             //player.setMediaItem(mediaItem)
+            player.currentMediaItem?.let {
+                Log.e("CurrentMediaItem","${it.mediaId}  ${it.requestMetadata.mediaUri}")
+            }
             /*player.addListener(
                 object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         if (isPlaying) {
                             // Active playback.
+                            //adapter.submitList(list)
                         } else {
                             // Not playing because playback is paused, ended, suppressed, or the player
                             // is buffering, stopped or failed. Check player.playWhenReady,
@@ -202,7 +222,6 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
                 player.prepare()
                 player.seekToNextMediaItem()*/
 
-                //player.getMed
                 //player.addMediaItem(mediaItem)
                 player.setMediaItem(mediaItem)
                 player.prepare()
@@ -249,7 +268,7 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
         item.status?.let{
             if(it==Constants.STATUS_DOWNLOADED){
                 playFile(item, forcePlay = true)
-                Toast.makeText(this,"Autoplay disabled",Toast.LENGTH_SHORT).show()
+                //Toast.makeText(this,"Autoplay disabled",Toast.LENGTH_SHORT).show()
             }
             else if(it==Constants.STATUS_FAILED){
                 viewModel.startDownloadingOrPlaying()

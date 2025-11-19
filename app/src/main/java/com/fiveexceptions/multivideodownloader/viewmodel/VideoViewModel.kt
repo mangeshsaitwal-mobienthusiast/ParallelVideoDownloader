@@ -6,8 +6,11 @@ import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.fiveexceptions.multivideodownloader.model.VideoItem
 import com.fiveexceptions.multivideodownloader.utils.Constants
@@ -17,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -44,6 +48,16 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
         val str = readJsonFromAssets(context,"video_list.json")
         Log.e("VideoList",str+"__")
         val list = parseJsonToModel(str)
+        list.forEach {
+            if(checkFileExists(it.id)){
+                it.file = File(context.filesDir, "video_${it.id}.mp4")
+                it.status = Constants.STATUS_DOWNLOADED
+                if(checkFileExists(it.id,true)){
+                    it.thumbFile = File(context.filesDir, "thumb_${it.id}.jpg")
+                }
+            }
+
+        }
         _items.value = list
     }
 
@@ -66,18 +80,21 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
 
     }
 
-    fun checkFileExists(id:Int): Boolean{
-        val targetFile = File(getApplication<Application>().filesDir, "video_${id}.mp4")
+    fun checkFileExists(id:Int,isThumb:Boolean = false): Boolean{
+
+        val fileName = if(isThumb)"thumb_${id}.jpg" else "video_${id}.mp4"
+        val targetFile = File(getApplication<Application>().filesDir, fileName)
         if(targetFile.exists()){
             return true
         }
         return false
     }
+
     private fun downloadWithProgress(item: VideoItem) {
         semaphore.acquire()
         try {
             updateItemStatus(item.id) { it.copy(status = Constants.STATUS_DOWNLOADING, progress = 0) }
-
+            fetchVideoThumbnail(item)
             val request = Request.Builder().url(item.url).get().build()
             val response = client.newCall(request).execute()
             if (!response.isSuccessful) {
@@ -138,16 +155,34 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun fetchVideoThumbnail(videoUrl: String): Bitmap? {
-        return try {
+    fun fetchVideoThumbnail(item: VideoItem)/*: Bitmap?*/ {
+        /*return*/ try {
             val retriever = MediaMetadataRetriever()
-            retriever.setDataSource(videoUrl, HashMap())
+            retriever.setDataSource(item.url, HashMap())
             val bitmap = retriever.getFrameAtTime(0) // first frame
             retriever.release()
-            bitmap
+            //bitmap
+            bitmap?.let {
+                viewModelScope.launch {
+                    saveThumbnail(it,item.id)
+                }
+            }
+
+
         } catch (e: Exception) {
             e.printStackTrace()
-            null
+            /*null*/
+        }
+    }
+
+    suspend fun saveThumbnail( bitmap: Bitmap,id:Int) {
+         withContext(Dispatchers.IO) {
+            val filename = "thumb_${id}.jpg"
+            val fos = application.openFileOutput(filename, Context.MODE_PRIVATE)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos)
+            fos.close()
+             updateItemStatus(id) { it.copy(thumbFile = File(application.filesDir, filename)) }
+            //File(application.filesDir, filename).toUri()
         }
     }
 
