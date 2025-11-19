@@ -64,9 +64,7 @@ class MainActivity : AppCompatActivity(),VideoAdapter.OnItemClickListener{
         binding.rvVideos.adapter = adapter
         adapter.setOnItemClickListener(this)
         viewModel.prepare(this)
-
-        preparePlaylist()
-
+        
         lifecycleScope.launch {
             viewModel.items.collect { list ->
                 adapter.submitList(list)
